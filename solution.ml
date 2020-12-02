@@ -74,13 +74,65 @@ module Solver1 : Solver = struct
     string_of_int(aux list
     )
           
+end
 
+module Solver2 : Solver = struct
+
+  let extract string = 
+      match String.split_on_char ' ' string with
+      | [bounds ; n ; rest] -> 
+        match String.split_on_char '-' bounds with
+        | [lower ; upper] -> (int_of_string lower, int_of_string upper, String.get n 0, rest)
+        | _ -> failwith ":pp"
+      | _ -> failwith ":p"
+  
+
+  let extract_on_list list = 
+    List.map extract list
+  
+  let naloga1 data =
+    let list = data |> List.lines |> extract_on_list in
+    let rec aux_aux counter n = function
+      | [] -> counter
+      | y :: ys ->
+        if y = n then
+          aux_aux (counter + 1) n ys
+        else
+          aux_aux counter n ys
+    in
+    let rec aux counter = function
+      | [] -> counter
+      | x :: xs -> 
+        match x with
+        | (lower, upper, n, chars) ->
+          let list_of_chars = List.init (String.length chars) (String.get chars) in
+          if (aux_aux 0 n list_of_chars >= lower && aux_aux 0 n list_of_chars <= upper) then
+            aux (counter + 1) xs
+          else
+            aux counter xs
+    in
+    string_of_int (aux 0 list)
+    
+    let naloga2 data _part1 =
+      let list = data |> List.lines |> extract_on_list in
+      let rec aux counter = function
+        | [] -> counter
+        | x :: xs -> 
+          match x with
+          | (lower, upper, n, chars) -> 
+            if ((String.get chars (lower - 1) = n) <> (String.get chars (upper - 1) = n)) then
+              aux (counter + 1) xs
+            else
+              aux counter xs
+      in
+      string_of_int (aux 0 list)
 end
 
 
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
+  | "2" -> (module Solver2)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
