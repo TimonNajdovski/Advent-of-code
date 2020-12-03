@@ -72,8 +72,7 @@ module Solver1 : Solver = struct
         | (y, z) -> x*y*z
     in
     string_of_int(aux list
-    )
-          
+    )          
 end
 
 module Solver2 : Solver = struct
@@ -84,7 +83,6 @@ module Solver2 : Solver = struct
         match String.split_on_char '-' bounds with
         | [lower ; upper] -> (int_of_string lower, int_of_string upper, String.get n 0, rest)
         | _ -> failwith ":pp"
-      | _ -> failwith ":p"
   
 
   let extract_on_list list = 
@@ -128,11 +126,61 @@ module Solver2 : Solver = struct
       string_of_int (aux 0 list)
 end
 
+module Solver3 : Solver = struct
+
+  let get_index n step length =
+    (n + step) mod length
+
+  let naloga1 data =
+    let rows = data |> List.lines in
+    let rec aux counter position length = function
+      | [] -> counter
+      | x :: xs -> 
+        let index = get_index position 3 length in
+        if String.get x position = '#' then 
+          aux (counter + 1) index length xs
+        else
+          aux counter index length xs
+    in
+    string_of_int (aux 0 0 (rows |> List.hd |> String.length) rows)
+
+  let naloga2 data _part1 =
+    let rows = data |> List.lines in
+    let rec aux counter position step length = function
+      | [] -> counter
+      | x :: xs -> 
+        let index = get_index position step length in
+        if String.get x position = '#' then 
+          aux (counter + 1) index step length xs
+        else
+          aux counter index step length xs
+    in
+    let rec paths product rows = function
+      | [] -> product
+      | y :: ys -> 
+        let new_product = product * (aux 0 0 y (rows |> List.hd |> String.length) rows) in
+        paths new_product rows ys
+    in
+    let rec aux_double skip counter position length = function
+      | [] -> counter
+      | x :: xs -> 
+        if skip then
+          aux_double (not skip) counter position length xs
+        else
+          let index = get_index position 1 length in
+          if String.get x position = '#' then 
+            aux_double (not skip) (counter + 1) index length xs
+          else
+            aux_double (not skip) counter index length xs
+    in
+    string_of_int ((paths 1 rows [1;3;5;7]) * (aux_double false 0 0 (rows |> List.hd |> String.length) rows))
+end
 
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
+  | "3" -> (module Solver3)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
