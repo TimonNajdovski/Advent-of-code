@@ -18,7 +18,8 @@ module List = struct
     let rec sum' a = function [] -> a | x :: xs -> sum' (a + x) xs in
     sum' 0 l
 
-  let lines = String.split_on_char '\n'
+  let lines = String.split_on_char '\n' 
+
 end
 
 module type Solver = sig
@@ -176,11 +177,121 @@ module Solver3 : Solver = struct
     string_of_int ((paths 1 rows [1;3;5;7]) * (aux_double false 0 0 (rows |> List.hd |> String.length) rows))
 end
 
+(*module Solver4 : Solver = struct
+
+  let split_on_blank string =
+    let lines = String.split_on_char '\n' string in
+    let rec aux acc_l acc_s = function
+      | [] -> acc_s :: acc_l
+      | x :: xs -> 
+        if x = "" then
+          aux (acc_s :: acc_l) "" xs
+        else
+          aux acc_l (acc_s ^ " " ^ x) xs 
+    in
+    aux [] "" lines
+
+  let naloga1 data = 
+    let list = 
+      data |> split_on_blank
+      |> List.map (fun y -> String.split_on_char ' ' y)
+      |> List.map (fun y -> List.map (fun x -> String.sub x 0 3) y)
+    in
+    let rec checker is_valid list = function
+      | [] -> is_valid
+      | y :: ys ->
+        checker (is_valid && (List.mem y list)) list ys
+    in
+    let rec aux counter = function
+      | [] -> counter
+      | x :: xs -> 
+        if checker false x  ["byr";"iyr";"eyr";"hgt";"hcl";"ecl";"pid"]  then
+          aux (counter + 1) xs
+        else
+          aux counter xs
+    in
+    string_of_int (aux 0 list)
+
+  let naloga2 data _part1 = "0"
+
+end*)
+
+module Solver5 : Solver = struct
+
+  let binary_to_dec string =
+    let list = List.init (String.length string) (String.get string) |> List.rev in
+    let rec aux digit sum = function
+      | [] -> sum
+      | x :: xs ->
+        if x = '0' then
+          aux (digit * 2) sum xs
+        else
+          aux (digit * 2) (sum + digit) xs
+    in
+      aux 1 0 list 
+
+  let process string = 
+    let process_row = function
+      | 'F' -> '0'
+      | 'B' -> '1'
+      | _ -> failwith "Invalid row"
+    in
+    let process_column = function
+      | 'L' -> '0'
+      | 'R' -> '1'
+      | _ -> failwith "Invalid column"
+    in
+    let row = 
+      String.sub string 0 7
+      |> String.map (fun y -> process_row y)
+    in
+    let column = 
+      String.sub string 7 3
+      |> String.map (fun y -> process_column y)
+    in
+    (binary_to_dec row, binary_to_dec column)
+  
+  let naloga1 data =
+    let lines = data |> List.lines |> List.map process in
+    let rec aux biggest = function
+      | [] -> biggest
+      | x :: xs ->
+        match x with
+        | (row, column) ->
+          if (row * 8) + column > biggest then
+            aux ((row * 8) + column) xs
+          else
+            aux biggest xs
+    in 
+    string_of_int (aux 0 lines)
+
+  let naloga2 data _part1 = 
+  let lines = 
+  data |> List.lines 
+  |> List.map process
+  |> List.map (fun (x, y) -> (8*x) + y)
+  |> List.sort (compare) in
+  
+  let rec aux index = function
+    | [] -> failwith "empty list"
+    | [x] -> x
+    | x :: xs ->
+      if x != index then
+        index
+      else
+        aux (index + 1) xs
+  in
+  string_of_int (aux (List.hd lines) lines)
+
+end
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
   | "3" -> (module Solver3)
+  (*| "4" -> (module Solver4)*)
+  | "5" -> (module Solver5)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
