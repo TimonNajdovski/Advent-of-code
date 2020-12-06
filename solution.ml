@@ -18,8 +18,49 @@ module List = struct
     let rec sum' a = function [] -> a | x :: xs -> sum' (a + x) xs in
     sum' 0 l
 
+  let split_on_blank string =
+    let lines = String.split_on_char '\n' string in
+    let rec aux acc_l acc_s = function
+      | [] -> acc_s :: acc_l
+      | x :: xs -> 
+        if x = "" then
+          aux (acc_s :: acc_l) "" xs
+        else if acc_s = "" then
+          aux acc_l x xs
+        else  
+          aux acc_l (acc_s ^ " " ^ x) xs
+    in
+    aux [] "" lines
+
+  let list_of_string string =
+    List.init (String.length string) (String.get string)
+  
   let lines = String.split_on_char '\n' 
 
+  let intersection lists =
+    
+    let rec aux element = function
+      | [] -> true
+      | x :: xs -> 
+        if List.mem element x then
+          aux element xs
+        else
+          false
+    in      
+    let rec intersection_aux acc lists = function
+      | [] -> acc
+      | y :: ys ->
+        if y = ' ' then
+          intersection_aux acc lists ys
+        else if aux y lists then
+          intersection_aux (y :: acc) lists ys
+        else
+          intersection_aux acc lists ys
+    in
+    match lists with
+      | [] -> failwith "no lists"
+      | x :: xs -> 
+        intersection_aux [] xs x
 end
 
 module type Solver = sig
@@ -179,17 +220,7 @@ end
 
 (*module Solver4 : Solver = struct
 
-  let split_on_blank string =
-    let lines = String.split_on_char '\n' string in
-    let rec aux acc_l acc_s = function
-      | [] -> acc_s :: acc_l
-      | x :: xs -> 
-        if x = "" then
-          aux (acc_s :: acc_l) "" xs
-        else
-          aux acc_l (acc_s ^ " " ^ x) xs 
-    in
-    aux [] "" lines
+  
 
   let naloga1 data = 
     let list = 
@@ -285,6 +316,44 @@ module Solver5 : Solver = struct
 
 end
 
+module Solver6 : Solver = struct
+
+  let naloga1 data =
+    let groups =
+    data |> List.split_on_blank
+    |> List.map (fun y -> List.list_of_string y)
+
+    in
+    let rec elements_in_group list = function
+      | [] -> List.length list
+      | x :: xs ->
+        if (x = ' ' || List.mem x list) then
+          elements_in_group list xs
+        else
+          elements_in_group (x :: list) xs
+    in
+    let rec aux counter = function
+      | [] -> counter
+      | x :: xs -> 
+        aux (counter + (elements_in_group [] x)) xs
+    in
+    string_of_int(aux 0 groups)
+
+  let naloga2 data _part1 = 
+    let groups =
+    data |> List.split_on_blank
+    |> List.map (fun y -> String.split_on_char ' ' y)
+    |> List.map (fun y -> List.map (fun x -> List.list_of_string x) y) in
+    let rec aux counter = function
+      | [] -> counter
+      | x :: xs ->
+        aux (counter + List.length (List.intersection x)) xs
+    in
+    string_of_int(aux 0 groups)
+    
+  end
+
+
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
@@ -292,6 +361,7 @@ let choose_solver : string -> (module Solver) = function
   | "3" -> (module Solver3)
   (*| "4" -> (module Solver4)*)
   | "5" -> (module Solver5)
+  | "6" -> (module Solver6)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
