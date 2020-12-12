@@ -1,3 +1,4 @@
+#load "str.cma"
 let preberi_datoteko ime_datoteke =
   let chan = open_in ime_datoteke in
   let vsebina = really_input_string chan (in_channel_length chan) in
@@ -218,13 +219,11 @@ module Solver3 : Solver = struct
     string_of_int ((paths 1 rows [1;3;5;7]) * (aux_double false 0 0 (rows |> List.hd |> String.length) rows))
 end
 
-(*module Solver4 : Solver = struct
-
-  
+module Solver4 : Solver = struct
 
   let naloga1 data = 
     let list = 
-      data |> split_on_blank
+      data |> List.split_on_blank
       |> List.map (fun y -> String.split_on_char ' ' y)
       |> List.map (fun y -> List.map (fun x -> String.sub x 0 3) y)
     in
@@ -236,7 +235,7 @@ end
     let rec aux counter = function
       | [] -> counter
       | x :: xs -> 
-        if checker false x  ["byr";"iyr";"eyr";"hgt";"hcl";"ecl";"pid"]  then
+        if checker true x  ["byr";"iyr";"eyr";"hgt";"hcl";"ecl";"pid"]  then
           aux (counter + 1) xs
         else
           aux counter xs
@@ -245,7 +244,7 @@ end
 
   let naloga2 data _part1 = "0"
 
-end*)
+end
 
 module Solver5 : Solver = struct
 
@@ -351,17 +350,68 @@ module Solver6 : Solver = struct
     in
     string_of_int(aux 0 groups)
     
-  end
+end
 
+module Solver12 : Solver = struct
+
+  let process string = 
+      (String.get string 0, int_of_string (String.sub string 1 ((String.length string) - 1)))
+  
+  let move (x, y) distance = function
+    | 'N' -> (x, y + distance)
+    | 'S' -> (x, y - distance)
+    | 'E' -> (x + distance, y)
+    | 'W' -> (x - distance, y)
+    | _ -> failwith "invalid direction"
+  
+  let change_facing num facing = 
+    let facing_to_num = function
+      | 'N' -> 0
+      | 'E' -> 1
+      | 'S' -> 2
+      | 'W' -> 3
+      | _ -> failwith "invalid string"
+    in
+    match ((facing_to_num facing) + num) mod 4 with
+      | 0 -> 'N'
+      | 1 -> 'E'
+      | 2 -> 'S'
+      | 3 -> 'W'
+      | _ -> failwith "invalid int"
+
+  let rotate facing = function
+    | ('R', 90) | ('L', 270) -> change_facing 1 facing
+    | ('L', 90) | ('R', 270) -> change_facing 3 facing
+    | ('L', 180) | ('R', 180) -> change_facing 2 facing
+    | _ -> failwith "invalid input"
+
+  let execute_order ((x, y), facing) = function
+    | ('L', rotation) -> ((x, y), rotate facing ('L', rotation))
+    | ('R', rotation) -> ((x, y), rotate facing ('R', rotation))
+    | ('F', distance) -> ((move (x, y) distance facing), facing)
+    | (direction, distance) -> ((move (x, y) distance direction), facing)
+
+  let naloga1 data =
+    let list = data |> List.lines |> List.map (fun y -> process y) in
+    let rec aux ((x, y), facing) = function
+      | [] -> abs x + abs y
+      | z :: zs -> aux (execute_order ((x, y), facing) z) zs
+    in
+    string_of_int (aux ((0, 0), 'E') list)
+
+  let naloga2 data _part1 = "0"
+
+end
 
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
   | "3" -> (module Solver3)
-  (*| "4" -> (module Solver4)*)
+  | "4" -> (module Solver4)
   | "5" -> (module Solver5)
   | "6" -> (module Solver6)
+  | "12" -> (module Solver12)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
